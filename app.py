@@ -83,7 +83,7 @@ def cho_xe_vao():
 def cho_xe_ra():
     data = request.json
     ma_the = data.get('maThe')
-    
+     
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
