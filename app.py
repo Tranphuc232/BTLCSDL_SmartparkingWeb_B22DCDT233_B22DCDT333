@@ -108,7 +108,85 @@ def cho_xe_ra():
     except Exception as e:
         print("❌ LỖI SQL (XE RA):", str(e))
         return jsonify({"status": "error", "message": str(e)}), 400
+
+# API 4: Đăng nhập
+@app.route('/api/dang-nhap', methods=['POST'])
+def dang_nhap():
+    data = request.json
+    ma_nv = data.get('ma_nv')
+    mat_khau = data.get('mat_khau')
     
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Tìm xem có nhân viên nào khớp mã và mật khẩu không
+        cursor.execute("SELECT Ten FROM NhanVien WHERE MaNV = ? AND MatKhau = ?", (ma_nv, mat_khau))
+        nhan_vien = cursor.fetchone()
+        
+        if nhan_vien:
+            return jsonify({"status": "success", "message": "Đăng nhập thành công", "ten_nv": nhan_vien[0]})
+        else:
+            return jsonify({"status": "error", "message": "Sai mã nhân viên hoặc mật khẩu!"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+# API 5: Xem lịch sử giao dịch (Cho Admin)
+@app.route('/api/lich-su', methods=['GET'])
+def get_lich_su():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Lấy 100 giao dịch mới nhất để Admin dễ xem
+        cursor.execute("""
+            SELECT TOP 100 MaLuot, BienSo, MaThe, ThoiGianVao, ThoiGianRa, TongTien, NguoiThuTien
+            FROM LuotGui
+            ORDER BY ThoiGianVao DESC
+        """)
+        rows = cursor.fetchall()
+        
+        lich_su = []
+        for row in rows:
+            lich_su.append({
+                "MaLuot": row.MaLuot,
+                "BienSo": row.BienSo,
+                "MaThe": row.MaThe,
+                "ThoiGianVao": row.ThoiGianVao.strftime("%d/%m/%Y %H:%M:%S") if row.ThoiGianVao else "",
+                "ThoiGianRa": row.ThoiGianRa.strftime("%d/%m/%Y %H:%M:%S") if row.ThoiGianRa else "Đang trong bãi",
+                "TongTien": float(row.TongTien) if row.TongTien else 0,
+                "NguoiThuTien": row.NguoiThuTien if row.NguoiThuTien else "Chưa ghi nhận"
+            })
+        return jsonify(lich_su)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+# API 6: Khóa thẻ khẩn cấp
+@app.route('/api/khoa-the', methods=['POST'])
+def khoa_the():
+    data = request.json
+    ma_the = data.get('ma_the')
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("UPDATE TheXe SET TrangThaiKhoa = 1 WHERE MaThe = ?", (ma_the,))
+        conn.commit()
+        
+        return jsonify({"status": "success", "message": f"Đã khóa thẻ {ma_the} thành công! Kẻ gian không thể sử dụng."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
 if __name__ == '__main__':
     print("🚀 Server đang khởi động tại http://127.0.0.1:5000")
     app.run(debug=True, port=5000)
