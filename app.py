@@ -1,0 +1,114 @@
+from flask import Flask, jsonify, request, render_template
+from flask_cors import CORS
+import pyodbc
+
+app = Flask(__name__)
+CORS(app) # Cho phép Web gọi API
+
+# Giao diện Trang chủ Web
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+# Thiết lập kết nối đến SQL Server (Dùng Windows Authentication)
+def get_db_connection():
+    # Lưu ý: Nếu SQL Server của bạn có tên là SQLEXPRESS, hãy đổi 'localhost' thành 'localhost\\SQLEXPRESS'
+    conn = pyodbc.connect(
+        'Driver={SQL Server};'
+        'Server=DESKTOP-V8SKLAG\\MSSQLSERVER01;'
+        'Database=parking_management;'
+        'Trusted_Connection=yes;'
+    )
+    return conn
+
+# API 1: Lấy danh sách xe đang trong bãi
+@app.route('/api/xe-trong-bai', methods=['GET'])
+def get_xe_trong_bai():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT LG.MaLuot, LG.BienSo, TX.LoaiThe, ISNULL(KH.Ten, N'Khách vãng lai') as ChuXe, LG.ThoiGianVao
+        FROM LuotGui LG
+        JOIN Xe X ON LG.BienSo = X.BienSo
+        LEFT JOIN KhachHang KH ON X.MaKH = KH.MaKH
+        JOIN TheXe TX ON LG.MaThe = TX.MaThe
+        WHERE LG.ThoiGianRa IS NULL
+        ORDER BY LG.ThoiGianVao DESC
+    """)
+    rows = cursor.fetchall()
+    result = []
+    for row in rows:
+        result.append({
+            'MaLuot': row.MaLuot,
+            'BienSo': row.BienSo,
+            'LoaiThe': row.LoaiThe,
+            'ChuXe': row.ChuXe,
+            'GioVao': row.ThoiGianVao.strftime("%d/%m/%Y %H:%M:%S")
+        })
+    conn.close()
+    return jsonify(result)
+
+# API 2: Cho xe vào bãi
+@app.route('/api/cho-xe-vao', methods=['POST'])
+def cho_xe_vao():
+    data = request.json
+    ma_the = data.get('maThe')
+    bien_so = data.get('bienSo')
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # BƯỚC 1: Kiểm tra xem xe này đã có "hộ khẩu" trong bảng Xe chưa?
+        cursor.execute("SELECT COUNT(*) FROM Xe WHERE BienSo = ?", (bien_so,))
+        if cursor.fetchone()[0] == 0:
+            # VÁ LỖI Ở ĐÂY: Thêm LoaiXe mặc định là 'Ô tô' để SQL Server không báo lỗi NULL
+            cursor.execute("INSERT INTO Xe (BienSo, LoaiXe) VALUES (?, N'Ô tô')", (bien_so,))
+            
+        # BƯỚC 2: Cấp lượt gửi vào bãi
+        cursor.execute("""
+            INSERT INTO LuotGui (MaThe, BienSo, MaNV, MaLanVao, MaGia, ThoiGianVao)
+            VALUES (?, ?, 'NV01', 'LAN1_IN', 'GIA_OT_NGAY', GETDATE())
+        """, (ma_the, bien_so))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "message": "Cho xe vào thành công!"}), 200
+    except Exception as e:
+        print("❌ LỖI SQL:", str(e))
+        return jsonify({"status": "error", "message": str(e)}), 400
+    
+# API 3: Cho xe ra khỏi bãi (Tính tiền và cập nhật giờ ra)
+@app.route('/api/cho-xe-ra', methods=['POST'])
+def cho_xe_ra():
+    data = request.json
+    ma_the = data.get('maThe')
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 1. Kiểm tra xem thẻ này có thực sự đang trong bãi không?
+        cursor.execute("SELECT MaLuot FROM LuotGui WHERE MaThe = ? AND ThoiGianRa IS NULL", (ma_the,))
+        if not cursor.fetchone():
+            return jsonify({"status": "error", "message": "Thẻ này không có trong bãi hoặc đã ra rồi!"}), 400
+            
+        # 2. Thực hiện Cho Xe Ra: Cập nhật Giờ ra và Tính tiền tự động
+        cursor.execute("""
+            UPDATE LuotGui 
+            SET ThoiGianRa = GETDATE(),
+                MaLanRa = 'LAN1_OUT',
+                TongTien = (SELECT DonGia FROM BangGia WHERE MaGia = LuotGui.MaGia)
+            WHERE MaThe = ? AND ThoiGianRa IS NULL
+        """, (ma_the,))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "message": "Cho xe ra thành công! Đã chốt ca."}), 200
+    except Exception as e:
+        print("❌ LỖI SQL (XE RA):", str(e))
+        return jsonify({"status": "error", "message": str(e)}), 400
+    
+if __name__ == '__main__':
+    print("🚀 Server đang khởi động tại http://127.0.0.1:5000")
+    app.run(debug=True, port=5000)

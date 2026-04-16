@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Lý Bãi Đỗ Xe Thông Minh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans flex h-screen overflow-hidden">
+
+    <aside class="w-64 bg-slate-800 text-white flex flex-col">
+        <div class="h-16 flex items-center justify-center border-b border-slate-700">
+            <h1 class="text-xl font-bold uppercase tracking-wider"><i class="fa-solid fa-square-parking mr-2 text-blue-400"></i> Smart Parking</h1>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-2">
+            <button id="nav-dashboard" onclick="chuyenTab('dashboard')" class="w-full flex items-center px-4 py-3 text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-chart-line w-6 text-left"></i> <span class="flex-1 text-left">Dashboard</span>
+            </button>
+            <button id="nav-kiemsoat" onclick="chuyenTab('kiemsoat')" class="w-full flex items-center px-4 py-3 bg-blue-600 text-white rounded-lg transition-colors shadow-md">
+                <i class="fa-solid fa-car w-6 text-left"></i> <span class="flex-1 text-left">Kiểm soát Ra/Vào</span>
+            </button>
+        </nav>
+        <div class="p-4 border-t border-slate-700 text-sm text-slate-400">
+            <p>Nhân viên trực: <b>NV01 - Admin</b></p>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col">
+        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-8">
+            <h2 id="header-title" class="text-2xl font-semibold text-gray-800">Kiểm Soát Ra/Vào</h2>
+            <div class="flex items-center space-x-4">
+                <span id="clock" class="text-gray-600 font-medium font-mono text-lg bg-gray-100 px-3 py-1 rounded"></span>
+            </div>
+        </header>
+
+        <div class="flex-1 p-8 overflow-y-auto">
+            
+            <div id="tab-dashboard" class="hidden space-y-6 animate-fade-in">
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
+                        <div class="text-gray-500 text-sm font-bold uppercase">Sức chứa bãi đỗ</div>
+                        <div class="text-3xl font-bold text-gray-800 mt-2">105 / 200 <span class="text-sm font-normal text-gray-500">xe</span></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
+                        <div class="text-gray-500 text-sm font-bold uppercase">Lượt xe vào hôm nay</div>
+                        <div class="text-3xl font-bold text-gray-800 mt-2">42 <span class="text-sm font-normal text-gray-500">lượt</span></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-yellow-500">
+                        <div class="text-gray-500 text-sm font-bold uppercase">Doanh thu dự kiến</div>
+                        <div class="text-3xl font-bold text-gray-800 mt-2">840.000 <span class="text-sm font-normal text-gray-500">VNĐ</span></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4"><i class="fa-solid fa-bell text-yellow-500 mr-2"></i> Trạng thái hệ thống</h3>
+                    <ul class="space-y-3 text-gray-600">
+                        <li class="flex items-center"><i class="fa-solid fa-circle-check text-green-500 mr-2"></i> Kết nối CSDL SQL Server: <b>Ổn định</b></li>
+                        <li class="flex items-center"><i class="fa-solid fa-circle-check text-green-500 mr-2"></i> Server Python Backend: <b>Đang chạy</b></li>
+                        <li class="flex items-center"><i class="fa-solid fa-circle-check text-green-500 mr-2"></i> Đường hầm Ngrok: <b>Trực tuyến</b></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="tab-kiemsoat" class="block animate-fade-in">
+                <div class="bg-white rounded-xl shadow-md p-6 mb-8 border-l-4 border-blue-500">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4"><i class="fa-solid fa-video mr-2 text-blue-500"></i> Camera Nhận Diện & Quẹt Thẻ</h3>
+                    <div class="flex space-x-4">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mã Thẻ (Quẹt thẻ)</label>
+                            <input id="input-mathe" type="text" placeholder="Ví dụ: T002 hoặc L001" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none uppercase font-bold">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Biển Số Nhận Diện</label>
+                            <input id="input-bienso" type="text" placeholder="Ví dụ: 29A-123.45" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none uppercase font-bold text-blue-700">
+                        </div>
+                        <div class="flex items-end space-x-3">
+                            <button id="btn-vao" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors flex items-center shadow-md">
+                                <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i> Cho Xe Vào
+                            </button>
+                            <button id="btn-ra" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg transition-colors flex items-center shadow-md">
+                                <i class="fa-solid fa-arrow-right-from-bracket mr-2"></i> Cho Xe Ra
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                        <h3 class="text-lg font-bold text-gray-700">Danh Sách Xe Đang Trong Bãi</h3>
+                        <button onclick="loadDanhSachXe()" class="text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> Làm mới
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider">
+                                    <th class="p-4 font-semibold">Mã Lượt</th>
+                                    <th class="p-4 font-semibold">Biển Số Xe</th>
+                                    <th class="p-4 font-semibold">Mã Thẻ</th>
+                                    <th class="p-4 font-semibold">Chủ Xe</th>
+                                    <th class="p-4 font-semibold">Giờ Vào</th>
+                                    <th class="p-4 font-semibold text-right">Trạng Thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bang-du-lieu-xe" class="text-gray-700">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // --- CẤU HÌNH LINK NGROK TẠI ĐÂY --- 
+        
+        // =========================================================
+
+        function chuyenTab(tenTab) {
+            const navDash = document.getElementById('nav-dashboard');
+            const navKiemSoat = document.getElementById('nav-kiemsoat');
+            const tabDash = document.getElementById('tab-dashboard');
+            const tabKiemSoat = document.getElementById('tab-kiemsoat');
+            const tieuDe = document.getElementById('header-title');
+
+            if(tenTab === 'dashboard') {
+                navDash.className = "w-full flex items-center px-4 py-3 bg-blue-600 text-white rounded-lg transition-colors shadow-md";
+                navKiemSoat.className = "w-full flex items-center px-4 py-3 text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg transition-colors";
+                tabDash.className = "block animate-fade-in space-y-6";
+                tabKiemSoat.className = "hidden";
+                tieuDe.innerText = "Dashboard Tổng Quan";
+            } else if(tenTab === 'kiemsoat') {
+                navKiemSoat.className = "w-full flex items-center px-4 py-3 bg-blue-600 text-white rounded-lg transition-colors shadow-md";
+                navDash.className = "w-full flex items-center px-4 py-3 text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg transition-colors";
+                tabKiemSoat.className = "block animate-fade-in";
+                tabDash.className = "hidden";
+                tieuDe.innerText = "Kiểm Soát Ra/Vào";
+            }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('vi-VN') + ' - ' + now.toLocaleDateString('vi-VN');
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // 1. Hàm Tải Dữ Liệu
+        async function loadDanhSachXe() {
+            try {
+                const response = await fetch('/api/xe-trong-bai', {
+                    headers: {
+                        'ngrok-skip-browser-warning': 'true' // Lệnh bài miễn tử Ngrok
+                    }
+                });
+                
+                // Tránh lỗi khi Ngrok vẫn trả về trang HTML cảnh báo
+                if (!response.ok && response.headers.get("content-type")?.includes("text/html")) {
+                    console.error("Ngrok đang chặn kết nối, vui lòng kiểm tra lại Header.");
+                    return;
+                }
+
+                const data = await response.json();
+                const tbody = document.getElementById('bang-du-lieu-xe');
+                tbody.innerHTML = ''; 
+                data.forEach(xe => {
+                    tbody.innerHTML += `
+                        <tr class="border-b border-gray-200 hover:bg-gray-50">
+                            <td class="p-4">#${xe.MaLuot}</td>
+                            <td class="p-4 font-bold text-gray-900">${xe.BienSo}</td>
+                            <td class="p-4"><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">${xe.LoaiThe}</span></td>
+                            <td class="p-4">${xe.ChuXe}</td>
+                            <td class="p-4">${xe.GioVao}</td>
+                            <td class="p-4 text-right"><span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1 rounded-full"><i class="fa-solid fa-car-side mr-1"></i> Đang bãi</span></td>
+                        </tr>
+                    `;
+                });
+            } catch (error) { console.error("Lỗi kéo dữ liệu:", error); }
+        }
+
+        // 2. Hàm Cho Xe Vào
+        async function xuLyChoXeVao() {
+            const maThe = document.getElementById('input-mathe').value.trim();
+            const bienSo = document.getElementById('input-bienso').value.trim();
+            if(!maThe || !bienSo) { alert("Vui lòng nhập đủ Mã Thẻ và Biển Số!"); return; }
+
+            try {
+                const response = await fetch('/api/cho-xe-vao', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true' // Lệnh bài miễn tử Ngrok
+                    },
+                    body: JSON.stringify({ maThe: maThe, bienSo: bienSo })
+                });
+                const result = await response.json();
+                if(response.ok) {
+                    alert("✅ " + result.message);
+                    document.getElementById('input-mathe').value = '';
+                    document.getElementById('input-bienso').value = '';
+                    loadDanhSachXe(); 
+                } else { alert("❌ CẢNH BÁO TỪ HỆ THỐNG: \n" + result.message); }
+            } catch (error) { alert("⚠️ Lỗi kết nối! Trạm trung chuyển Python hoặc Ngrok có thể đang tắt."); }
+        }
+
+        // 3. Hàm Cho Xe Ra
+        async function xuLyChoXeRa() {
+            const maThe = document.getElementById('input-mathe').value.trim();
+            if(!maThe) { alert("Vui lòng quẹt Mã Thẻ để cho xe ra!"); return; }
+
+            try {
+                const response = await fetch('/api/cho-xe-ra', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true' // Lệnh bài miễn tử Ngrok
+                    },
+                    body: JSON.stringify({ maThe: maThe })
+                });
+                const result = await response.json();
+                if(response.ok) {
+                    alert("✅ " + result.message);
+                    document.getElementById('input-mathe').value = '';
+                    document.getElementById('input-bienso').value = '';
+                    loadDanhSachXe(); 
+                } else { alert("❌ LỖI TRUY XUẤT: \n" + result.message); }
+            } catch (error) { alert("⚠️ Lỗi kết nối! Trạm trung chuyển Python hoặc Ngrok có thể đang tắt."); }
+        }
+
+        document.getElementById('btn-vao').addEventListener('click', xuLyChoXeVao);
+        document.getElementById('btn-ra').addEventListener('click', xuLyChoXeRa);
+        loadDanhSachXe();
+    </script>
+    
+    <style>
+        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</body>
+</html>
